@@ -7,9 +7,25 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="animated-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <div class="container glass">
         <header>
-            <h1>📝 Markdown 编辑器</h1>
+            <div class="header-content">
+                <h1>📝 Markdown 编辑器</h1>
+                <div class="header-actions">
+                    <button class="action-btn" id="theme-toggle" title="切换主题">
+                        <span class="icon">🌙</span>
+                    </button>
+                    <button class="action-btn" id="fullscreen-btn" title="全屏">
+                        <span class="icon">⛶</span>
+                    </button>
+                </div>
+            </div>
             <div class="toolbar">
                 <button class="btn-tool" onclick="insertMarkdown('# ')" title="标题">#</button>
                 <button class="btn-tool" onclick="insertMarkdown('**')" title="加粗"><b>B</b></button>
@@ -22,19 +38,23 @@
                 <div class="toolbar-divider"></div>
                 <button class="btn-primary" onclick="copyContent()">📋 复制 HTML</button>
                 <button class="btn-primary" onclick="downloadFile()">💾 下载</button>
+                <button class="btn-primary" onclick="exportHTML()">📄 导出 HTML</button>
             </div>
         </header>
 
         <div class="editor-container">
-            <div class="editor-panel">
+            <div class="editor-panel glass-card">
                 <div class="panel-header">
                     <h3>✏️ 编辑</h3>
-                    <span class="char-count" id="char-count">0 字符</span>
+                    <div class="editor-stats">
+                        <span class="char-count" id="char-count">0 字符</span>
+                        <span class="word-count" id="word-count">0 词</span>
+                    </div>
                 </div>
-                <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..."></textarea>
+                <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..." autofocus></textarea>
             </div>
 
-            <div class="preview-panel">
+            <div class="preview-panel glass-card">
                 <div class="panel-header">
                     <h3>👁️ 预览</h3>
                     <div class="preview-controls">
@@ -47,7 +67,7 @@
             </div>
         </div>
 
-        <div class="sample-section">
+        <div class="sample-section glass-card">
             <h3>📚 Markdown 语法速查</h3>
             <div class="syntax-grid">
                 <div class="syntax-item">
@@ -84,6 +104,10 @@
                 </div>
             </div>
         </div>
+
+        <footer class="glass-footer">
+            <p>✨ 使用 <span class="highlight">Marked.js</span> 构建 | 支持 <span class="highlight">GitHub Flavored Markdown</span></p>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
