@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 编辑器 - 实时预览</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Markdown 编辑器</h1>
+            <div class="toolbar">
+                <button class="btn-tool" onclick="insertMarkdown('# ')" title="标题">#</button>
+                <button class="btn-tool" onclick="insertMarkdown('**')" title="加粗"><b>B</b></button>
+                <button class="btn-tool" onclick="insertMarkdown('*')" title="斜体"><i>I</i></button>
+                <button class="btn-tool" onclick="insertMarkdown('[ ]( )')" title="链接">🔗</button>
+                <button class="btn-tool" onclick="insertMarkdown('![ ]( )')" title="图片">🖼️</button>
+                <button class="btn-tool" onclick="insertMarkdown('> ')" title="引用">❝</button>
+                <button class="btn-tool" onclick="insertMarkdown('- ')" title="列表">•</button>
+                <button class="btn-tool" onclick="insertMarkdown('`  `')" title="代码">&lt;/&gt;</button>
+                <div class="toolbar-divider"></div>
+                <button class="btn-primary" onclick="copyContent()">📋 复制 HTML</button>
+                <button class="btn-primary" onclick="downloadFile()">💾 下载</button>
+            </div>
+        </header>
+
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <h3>✏️ 编辑</h3>
+                    <span class="char-count" id="char-count">0 字符</span>
+                </div>
+                <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..."></textarea>
+            </div>
+
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h3>👁️ 预览</h3>
+                    <div class="preview-controls">
+                        <button class="btn-toggle active" data-view="preview">预览</button>
+                        <button class="btn-toggle" data-view="html">HTML</button>
+                    </div>
+                </div>
+                <div id="preview-content" class="content"></div>
+                <pre id="html-content" class="content html-view" style="display: none;"></pre>
+            </div>
+        </div>
+
+        <div class="sample-section">
+            <h3>📚 Markdown 语法速查</h3>
+            <div class="syntax-grid">
+                <div class="syntax-item">
+                    <code># 标题</code>
+                    <p>一级标题</p>
+                </div>
+                <div class="syntax-item">
+                    <code>## 标题</code>
+                    <p>二级标题</p>
+                </div>
+                <div class="syntax-item">
+                    <code>**粗体**</code>
+                    <p><strong>粗体</strong></p>
+                </div>
+                <div class="syntax-item">
+                    <code>*斜体*</code>
+                    <p><em>斜体</em></p>
+                </div>
+                <div class="syntax-item">
+                    <code>[链接](url)</code>
+                    <p>超链接</p>
+                </div>
+                <div class="syntax-item">
+                    <code>![图片](url)</code>
+                    <p>图片</p>
+                </div>
+                <div class="syntax-item">
+                    <code>> 引用</code>
+                    <p>引用文本</p>
+                </div>
+                <div class="syntax-item">
+                    <code>`代码`</code>
+                    <p>行内代码</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
