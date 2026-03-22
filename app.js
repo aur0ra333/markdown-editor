@@ -251,3 +251,210 @@ if (savedTheme === 'light') {
     document.getElementById('theme-toggle').querySelector('.icon').textContent = '☀️';
     isDarkTheme = false;
 }
+
+// ========== AI 功能 ==========
+// 使用免费的 AI API（这里用模拟，实际可以接真实 API）
+async function aiPolish() {
+    const text = document.getElementById('markdown-input').value;
+    if (!text.trim()) {
+        showNotification('请先输入内容', 'info');
+        return;
+    }
+    
+    showNotification('✨ AI 正在润色...', 'info');
+    
+    // 模拟 AI 润色（实际使用时可以替换为真实 API）
+    setTimeout(() => {
+        const polished = text
+            .replace(/很好/g, '非常好')
+            .replace(/不错/g, '相当不错')
+            .replace(/可以/g, '完全可以')
+            .replace(/应该/g, '强烈建议');
+        
+        document.getElementById('markdown-input').value = polished;
+        document.getElementById('markdown-input').dispatchEvent(new Event('input'));
+        showNotification('✨ AI 润色完成！', 'success');
+    }, 1500);
+}
+
+async function aiExpand() {
+    const text = document.getElementById('markdown-input').value;
+    if (!text.trim()) {
+        showNotification('请先输入内容', 'info');
+        return;
+    }
+    
+    showNotification('🚀 AI 正在扩写...', 'info');
+    
+    // 模拟 AI 扩写
+    setTimeout(() => {
+        const expanded = text + `\n\n## 扩展阅读\n\n- 相关资源：[了解更多](https://example.com)\n- 参考文档：[官方文档](https://docs.example.com)\n- 社区讨论：[参与讨论](https://github.com/discussions)`;
+        
+        document.getElementById('markdown-input').value = expanded;
+        document.getElementById('markdown-input').dispatchEvent(new Event('input'));
+        showNotification('🚀 AI 扩写完成！', 'success');
+    }, 1500);
+}
+
+// ========== 版本历史功能 ==========
+let versionHistory = [];
+let currentVersionIndex = -1;
+
+// 保存到版本历史
+function saveToHistory() {
+    const content = document.getElementById('markdown-input').value;
+    const timestamp = new Date().toLocaleString('zh-CN');
+    
+    // 如果内容相同，不保存
+    if (versionHistory.length > 0 && versionHistory[versionHistory.length - 1].content === content) {
+        return;
+    }
+    
+    versionHistory.push({ content, timestamp });
+    currentVersionIndex = versionHistory.length - 1;
+    
+    // 限制历史版本数量
+    if (versionHistory.length > 20) {
+        versionHistory.shift();
+        currentVersionIndex--;
+    }
+    
+    // 保存到 localStorage
+    localStorage.setItem('markdownHistory', JSON.stringify(versionHistory));
+}
+
+// 加载历史
+function loadHistory() {
+    const saved = localStorage.getItem('markdownHistory');
+    if (saved) {
+        versionHistory = JSON.parse(saved);
+        currentVersionIndex = versionHistory.length - 1;
+    }
+}
+
+// 显示历史面板
+function toggleHistory() {
+    const existingPanel = document.getElementById('history-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+        return;
+    }
+    
+    const panel = document.createElement('div');
+    panel.id = 'history-panel';
+    panel.style.cssText = `
+        position: fixed;
+        right: 20px;
+        top: 100px;
+        width: 300px;
+        max-height: 500px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 20px;
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    `;
+    
+    const historyList = versionHistory.map((v, i) => `
+        <div style="
+            padding: 10px;
+            margin: 5px 0;
+            background: ${i === currentVersionIndex ? 'var(--primary)' : 'var(--glass-bg)'};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        " onclick="restoreVersion(${i})"
+        onmouseover="this.style.transform='translateX(5px)'"
+        onmouseout="this.style.transform='translateX(0)'"
+        >
+            <div style="font-size: 0.85rem; color: ${i === currentVersionIndex ? 'white' : 'var(--text-secondary)'}">
+                版本 ${i + 1}
+            </div>
+            <div style="font-size: 0.75rem; color: ${i === currentVersionIndex ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)'}">
+                ${v.timestamp}
+            </div>
+        </div>
+    `).reverse().join('');
+    
+    panel.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: var(--text-primary); margin: 0;">📜 版本历史</h3>
+            <button onclick="toggleHistory()" style="
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                font-size: 1.5rem;
+                cursor: pointer;
+            ">&times;</button>
+        </div>
+        <div style="margin-bottom: 10px; font-size: 0.85rem; color: var(--text-secondary);">
+            共 ${versionHistory.length} 个版本
+        </div>
+        ${historyList || '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">暂无历史记录</div>'}
+    `;
+    
+    document.body.appendChild(panel);
+}
+
+// 恢复版本
+function restoreVersion(index) {
+    if (index < 0 || index >= versionHistory.length) return;
+    
+    currentVersionIndex = index;
+    document.getElementById('markdown-input').value = versionHistory[index].content;
+    document.getElementById('markdown-input').dispatchEvent(new Event('input'));
+    
+    showNotification(`已恢复到版本 ${index + 1}`, 'success');
+    toggleHistory();
+    toggleHistory();
+}
+
+// 自动保存历史（每 30 秒）
+setInterval(saveToHistory, 30000);
+loadHistory();
+
+// ========== 导出 PDF 功能 ==========
+function exportPDF() {
+    const content = document.getElementById('html-content').textContent;
+    
+    // 创建新窗口
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>导出的文档</title>
+            <style>
+                @media print {
+                    body { font-family: Arial, sans-serif; }
+                }
+            </style>
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    showNotification('📕 正在导出 PDF...', 'success');
+}
+
+// 监听输入，自动保存历史
+const originalInputHandler = document.getElementById('markdown-input').addEventListener('input', function() {
+    const markdown = this.value;
+    const html = marked.parse(markdown);
+    
+    document.getElementById('preview-content').innerHTML = html;
+    document.getElementById('html-content').textContent = html;
+    
+    // 更新字符统计
+    document.getElementById('char-count').textContent = `${markdown.length} 字符`;
+    
+    // 更新词数统计
+    const words = markdown.trim().split(/\s+/).filter(word => word.length > 0);
+    document.getElementById('word-count').textContent = `${words.length} 词`;
+});

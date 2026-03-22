@@ -36,9 +36,14 @@
                 <button class="btn-tool" onclick="insertMarkdown('- ')" title="列表">•</button>
                 <button class="btn-tool" onclick="insertMarkdown('`  `')" title="代码">&lt;/&gt;</button>
                 <div class="toolbar-divider"></div>
+                <button class="btn-ai" onclick="aiPolish()" title="AI 润色">✨ AI 润色</button>
+                <button class="btn-ai" onclick="aiExpand()" title="AI 扩写">🚀 AI 扩写</button>
+                <div class="toolbar-divider"></div>
                 <button class="btn-primary" onclick="copyContent()">📋 复制 HTML</button>
                 <button class="btn-primary" onclick="downloadFile()">💾 下载</button>
                 <button class="btn-primary" onclick="exportHTML()">📄 导出 HTML</button>
+                <button class="btn-primary" onclick="exportPDF()">📕 导出 PDF</button>
+                <button class="btn-tool" onclick="toggleHistory()" title="版本历史">📜 历史</button>
             </div>
         </header>
 
