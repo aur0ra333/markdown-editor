@@ -1,82 +1,127 @@
-// 初始化 marked.js 配置
 marked.setOptions({
     breaks: true,
     gfm: true
 });
 
-let currentView = 'preview';
-let isDarkTheme = true;
+const input = document.getElementById('markdown-input');
+const previewContent = document.getElementById('preview-content');
+const htmlContent = document.getElementById('html-content');
+const charCount = document.getElementById('char-count');
+const wordCount = document.getElementById('word-count');
+const themeToggle = document.getElementById('theme-toggle');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
 
-// 实时预览
-document.getElementById('markdown-input').addEventListener('input', function() {
-    const markdown = this.value;
+let currentVersionIndex = -1;
+let versionHistory = [];
+
+function updatePreview() {
+    const markdown = input.value;
     const html = marked.parse(markdown);
-    
-    document.getElementById('preview-content').innerHTML = html;
-    document.getElementById('html-content').textContent = html;
-    
-    // 更新字符统计
-    document.getElementById('char-count').textContent = `${markdown.length} 字符`;
-    
-    // 更新词数统计
-    const words = markdown.trim().split(/\s+/).filter(word => word.length > 0);
-    document.getElementById('word-count').textContent = `${words.length} 词`;
-});
 
-// 插入 Markdown 语法
-function insertMarkdown(syntax) {
-    const textarea = document.getElementById('markdown-input');
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    
-    const before = text.substring(0, start);
-    const selection = text.substring(start, end);
-    const after = text.substring(end);
-    
-    let newText;
-    if (syntax.includes('[]')) {
-        newText = before + syntax.replace('[ ]', `[${selection || '文本'}]`) + after;
-    } else if (syntax.includes('`  `')) {
-        newText = before + '`' + (selection || 'code') + '`' + after;
-    } else {
-        newText = before + syntax + selection + syntax + after;
-    }
-    
-    textarea.value = newText;
-    textarea.focus();
-    
-    // 触发 input 事件
-    textarea.dispatchEvent(new Event('input'));
+    previewContent.innerHTML = html;
+    htmlContent.textContent = html;
+    charCount.textContent = `${markdown.length} 字符`;
+
+    const words = markdown.trim().split(/\s+/).filter(Boolean);
+    wordCount.textContent = `${words.length} 词`;
 }
 
-// 复制 HTML
+function insertMarkdown(syntax) {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const selected = input.value.substring(start, end);
+    const before = input.value.substring(0, start);
+    const after = input.value.substring(end);
+
+    let inserted = syntax;
+
+    if (syntax === '# ') {
+        inserted = `${syntax}${selected || '标题'}`;
+    } else if (syntax === '**' || syntax === '*') {
+        inserted = `${syntax}${selected || '文本'}${syntax}`;
+    } else if (syntax === '[ ]( )') {
+        inserted = `[${selected || '链接文本'}](https://example.com)`;
+    } else if (syntax === '![ ]( )') {
+        inserted = `![${selected || '图片描述'}](https://example.com/image.png)`;
+    } else if (syntax === '> ') {
+        inserted = `> ${selected || '引用内容'}`;
+    } else if (syntax === '- ') {
+        inserted = `- ${selected || '列表项'}`;
+    } else if (syntax === '`  `') {
+        inserted = `\`${selected || 'code'}\``;
+    }
+
+    input.value = before + inserted + after;
+    input.focus();
+    input.setSelectionRange(before.length + inserted.length, before.length + inserted.length);
+    updatePreview();
+}
+
+function formatMarkdown() {
+    if (!input.value.trim()) {
+        showNotification('请先输入内容', 'info');
+        return;
+    }
+
+    const formatted = input.value
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2')
+        .replace(/(#{1,6}\s.*)\n([^\n#])/g, '$1\n\n$2')
+        .trim();
+
+    input.value = `${formatted}\n`;
+    updatePreview();
+    showNotification('格式已整理', 'success');
+}
+
+function insertTemplate() {
+    const template = `# 文档标题
+
+## 背景
+
+说明这篇文档要解决的问题。
+
+## 目标
+
+- 目标一
+- 目标二
+
+## 方案
+
+描述实现思路、关键步骤或核心内容。
+
+## 待办
+
+- [ ] 补充细节
+- [ ] 检查格式
+`;
+
+    const start = input.selectionStart;
+    const before = input.value.substring(0, start);
+    const after = input.value.substring(input.selectionEnd);
+    input.value = before + template + after;
+    input.focus();
+    input.setSelectionRange(before.length + template.length, before.length + template.length);
+    updatePreview();
+    showNotification('已插入模板', 'success');
+}
+
 function copyContent() {
-    const html = document.getElementById('html-content').textContent;
-    navigator.clipboard.writeText(html).then(() => {
-        showNotification('HTML 已复制到剪贴板！', 'success');
-    }).catch(err => {
-        console.error('复制失败:', err);
-        showNotification('复制失败', 'error');
+    navigator.clipboard.writeText(htmlContent.textContent).then(() => {
+        showNotification('HTML 已复制到剪贴板', 'success');
+    }).catch((error) => {
+        console.error('复制失败:', error);
+        showNotification('复制失败，请检查浏览器权限', 'error');
     });
 }
 
-// 下载 Markdown 文件
 function downloadFile() {
-    const markdown = document.getElementById('markdown-input').value;
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'document.md';
-    a.click();
-    URL.revokeObjectURL(url);
-    showNotification('文件已下载！', 'success');
+    downloadBlob(input.value, 'document.md', 'text/markdown');
+    showNotification('Markdown 文件已下载', 'success');
 }
 
-// 导出为 HTML 文件
 function exportHTML() {
-    const html = document.getElementById('html-content').textContent;
     const fullHTML = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -85,76 +130,100 @@ function exportHTML() {
     <title>导出的文档</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
+            padding: 32px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.7;
+            color: #1f2937;
         }
-        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
-        pre { background: #f5f5f5; padding: 15px; border-radius: 6px; overflow-x: auto; }
-        blockquote { border-left: 4px solid #667eea; padding-left: 1em; color: #666; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+        pre { background: #111827; color: #f9fafb; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        blockquote { border-left: 4px solid #2563eb; margin-left: 0; padding-left: 16px; color: #4b5563; }
         img { max-width: 100%; height: auto; }
-        a { color: #667eea; }
+        a { color: #2563eb; }
     </style>
 </head>
 <body>
-${html}
+${htmlContent.textContent}
 </body>
 </html>`;
-    
-    const blob = new Blob([fullHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'document.html';
-    a.click();
-    URL.revokeObjectURL(url);
-    showNotification('HTML 文件已导出！', 'success');
+
+    downloadBlob(fullHTML, 'document.html', 'text/html');
+    showNotification('HTML 文件已导出', 'success');
 }
 
-// 切换预览模式
-document.querySelectorAll('.btn-toggle').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        
-        const view = this.dataset.view;
-        currentView = view;
-        
-        if (view === 'preview') {
-            document.getElementById('preview-content').style.display = 'block';
-            document.getElementById('html-content').style.display = 'none';
-        } else {
-            document.getElementById('preview-content').style.display = 'none';
-            document.getElementById('html-content').style.display = 'block';
-        }
+function exportPDF() {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showNotification('浏览器阻止了弹窗，请允许后重试', 'error');
+        return;
+    }
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <title>导出的文档</title>
+            <style>
+                body {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 24px;
+                    font-family: Arial, "Microsoft YaHei", sans-serif;
+                    line-height: 1.7;
+                }
+                pre { white-space: pre-wrap; }
+            </style>
+        </head>
+        <body>${htmlContent.textContent}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    showNotification('已打开打印窗口，可另存为 PDF', 'success');
+}
+
+function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+document.querySelectorAll('.btn-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-toggle').forEach((item) => item.classList.remove('active'));
+        btn.classList.add('active');
+
+        const isPreview = btn.dataset.view === 'preview';
+        previewContent.style.display = isPreview ? 'block' : 'none';
+        htmlContent.style.display = isPreview ? 'none' : 'block';
     });
 });
 
-// 主题切换
-document.getElementById('theme-toggle').addEventListener('click', function() {
+themeToggle.addEventListener('click', () => {
     document.body.classList.toggle('light-theme');
-    isDarkTheme = !isDarkTheme;
-    
-    const icon = this.querySelector('.icon');
-    icon.textContent = isDarkTheme ? '🌙' : '☀️';
-    
-    localStorage.setItem('markdownEditorTheme', isDarkTheme ? 'dark' : 'light');
+    const isLight = document.body.classList.contains('light-theme');
+    themeToggle.querySelector('.icon').textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('markdownEditorTheme', isLight ? 'light' : 'dark');
 });
 
-// 全屏功能
-document.getElementById('fullscreen-btn').addEventListener('click', function() {
+fullscreenBtn.addEventListener('click', () => {
     if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-            console.error('全屏失败:', err);
+        document.documentElement.requestFullscreen().catch((error) => {
+            console.error('全屏失败:', error);
+            showNotification('全屏失败', 'error');
         });
     } else {
         document.exitFullscreen();
     }
 });
 
-// 通知提示
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -163,298 +232,159 @@ function showNotification(message, type = 'info') {
         position: fixed;
         top: 20px;
         right: 20px;
-        padding: 15px 25px;
-        background: ${type === 'success' ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#f5576c'};
+        padding: 12px 18px;
+        background: ${type === 'success' ? '#2563eb' : type === 'error' ? '#dc2626' : '#374151'};
         color: white;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        border-radius: 8px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2);
         z-index: 10000;
-        animation: slideInRight 0.3s ease-out;
+        animation: slideInRight 0.2s ease-out;
     `;
-    
+
     document.body.appendChild(notification);
-    
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 2000);
+        notification.style.animation = 'slideOutRight 0.2s ease-out';
+        setTimeout(() => notification.remove(), 200);
+    }, 1800);
 }
 
-// 添加动画样式
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideInRight {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+        from { transform: translateX(360px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
     @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(360px); opacity: 0; }
     }
 `;
 document.head.appendChild(style);
 
-// 默认内容
-const defaultContent = `# 欢迎使用 Markdown 编辑器
-
-这是一个**实时预览**的 Markdown 编辑器，采用现代玻璃态设计。
-
-## 功能特性
-
-- ✨ 实时预览
-- 📋 复制 HTML
-- 💾 下载 Markdown 文件
-- 📄 导出 HTML 文件
-- 🌙 主题切换（深色/浅色）
-- ⛶ 全屏模式
-- 📊 字数统计
-
-## 代码示例
-
-\`\`\`javascript
-function hello() {
-    console.log('Hello World!');
-}
-\`\`\`
-
-> 💡 提示：使用上方工具栏快速插入 Markdown 语法
-
-## 表格示例
-
-| 功能 | 状态 |
-|------|------|
-| 实时预览 | ✅ |
-| 主题切换 | ✅ |
-| 导出 HTML | ✅ |
-`;
-
-// 初始化
-document.getElementById('markdown-input').value = defaultContent;
-document.getElementById('markdown-input').dispatchEvent(new Event('input'));
-
-// 加载保存的主题
-const savedTheme = localStorage.getItem('markdownEditorTheme');
-if (savedTheme === 'light') {
-    document.body.classList.add('light-theme');
-    document.getElementById('theme-toggle').querySelector('.icon').textContent = '☀️';
-    isDarkTheme = false;
-}
-
-// ========== AI 功能 ==========
-// 使用免费的 AI API（这里用模拟，实际可以接真实 API）
-async function aiPolish() {
-    const text = document.getElementById('markdown-input').value;
-    if (!text.trim()) {
-        showNotification('请先输入内容', 'info');
-        return;
-    }
-    
-    showNotification('✨ AI 正在润色...', 'info');
-    
-    // 模拟 AI 润色（实际使用时可以替换为真实 API）
-    setTimeout(() => {
-        const polished = text
-            .replace(/很好/g, '非常好')
-            .replace(/不错/g, '相当不错')
-            .replace(/可以/g, '完全可以')
-            .replace(/应该/g, '强烈建议');
-        
-        document.getElementById('markdown-input').value = polished;
-        document.getElementById('markdown-input').dispatchEvent(new Event('input'));
-        showNotification('✨ AI 润色完成！', 'success');
-    }, 1500);
-}
-
-async function aiExpand() {
-    const text = document.getElementById('markdown-input').value;
-    if (!text.trim()) {
-        showNotification('请先输入内容', 'info');
-        return;
-    }
-    
-    showNotification('🚀 AI 正在扩写...', 'info');
-    
-    // 模拟 AI 扩写
-    setTimeout(() => {
-        const expanded = text + `\n\n## 扩展阅读\n\n- 相关资源：[了解更多](https://example.com)\n- 参考文档：[官方文档](https://docs.example.com)\n- 社区讨论：[参与讨论](https://github.com/discussions)`;
-        
-        document.getElementById('markdown-input').value = expanded;
-        document.getElementById('markdown-input').dispatchEvent(new Event('input'));
-        showNotification('🚀 AI 扩写完成！', 'success');
-    }, 1500);
-}
-
-// ========== 版本历史功能 ==========
-let versionHistory = [];
-let currentVersionIndex = -1;
-
-// 保存到版本历史
 function saveToHistory() {
-    const content = document.getElementById('markdown-input').value;
+    const content = input.value;
     const timestamp = new Date().toLocaleString('zh-CN');
-    
-    // 如果内容相同，不保存
-    if (versionHistory.length > 0 && versionHistory[versionHistory.length - 1].content === content) {
+
+    if (versionHistory.length && versionHistory[versionHistory.length - 1].content === content) {
         return;
     }
-    
+
     versionHistory.push({ content, timestamp });
-    currentVersionIndex = versionHistory.length - 1;
-    
-    // 限制历史版本数量
     if (versionHistory.length > 20) {
         versionHistory.shift();
-        currentVersionIndex--;
     }
-    
-    // 保存到 localStorage
+
+    currentVersionIndex = versionHistory.length - 1;
     localStorage.setItem('markdownHistory', JSON.stringify(versionHistory));
 }
 
-// 加载历史
 function loadHistory() {
     const saved = localStorage.getItem('markdownHistory');
-    if (saved) {
+    if (!saved) return;
+
+    try {
         versionHistory = JSON.parse(saved);
         currentVersionIndex = versionHistory.length - 1;
+    } catch (error) {
+        console.error('历史记录解析失败:', error);
+        versionHistory = [];
     }
 }
 
-// 显示历史面板
 function toggleHistory() {
     const existingPanel = document.getElementById('history-panel');
     if (existingPanel) {
         existingPanel.remove();
         return;
     }
-    
+
     const panel = document.createElement('div');
     panel.id = 'history-panel';
     panel.style.cssText = `
         position: fixed;
         right: 20px;
-        top: 100px;
-        width: 300px;
-        max-height: 500px;
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        border-radius: 15px;
-        padding: 20px;
+        top: 96px;
+        width: 320px;
+        max-height: 520px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
         z-index: 1000;
         overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
     `;
-    
-    const historyList = versionHistory.map((v, i) => `
-        <div style="
-            padding: 10px;
-            margin: 5px 0;
-            background: ${i === currentVersionIndex ? 'var(--primary)' : 'var(--glass-bg)'};
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        " onclick="restoreVersion(${i})"
-        onmouseover="this.style.transform='translateX(5px)'"
-        onmouseout="this.style.transform='translateX(0)'"
-        >
-            <div style="font-size: 0.85rem; color: ${i === currentVersionIndex ? 'white' : 'var(--text-secondary)'}">
-                版本 ${i + 1}
-            </div>
-            <div style="font-size: 0.75rem; color: ${i === currentVersionIndex ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)'}">
-                ${v.timestamp}
-            </div>
-        </div>
+
+    const historyList = versionHistory.map((version, index) => `
+        <button class="history-item ${index === currentVersionIndex ? 'active' : ''}" onclick="restoreVersion(${index})">
+            <span>版本 ${index + 1}</span>
+            <small>${version.timestamp}</small>
+        </button>
     `).reverse().join('');
-    
+
     panel.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="color: var(--text-primary); margin: 0;">📜 版本历史</h3>
-            <button onclick="toggleHistory()" style="
-                background: none;
-                border: none;
-                color: var(--text-primary);
-                font-size: 1.5rem;
-                cursor: pointer;
-            ">&times;</button>
+        <div class="history-header">
+            <h3>版本历史</h3>
+            <button onclick="toggleHistory()" aria-label="关闭">&times;</button>
         </div>
-        <div style="margin-bottom: 10px; font-size: 0.85rem; color: var(--text-secondary);">
-            共 ${versionHistory.length} 个版本
+        <p class="history-count">共 ${versionHistory.length} 个版本</p>
+        <div class="history-list">
+            ${historyList || '<div class="empty-history">暂无历史记录</div>'}
         </div>
-        ${historyList || '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">暂无历史记录</div>'}
     `;
-    
+
     document.body.appendChild(panel);
 }
 
-// 恢复版本
 function restoreVersion(index) {
     if (index < 0 || index >= versionHistory.length) return;
-    
+
     currentVersionIndex = index;
-    document.getElementById('markdown-input').value = versionHistory[index].content;
-    document.getElementById('markdown-input').dispatchEvent(new Event('input'));
-    
+    input.value = versionHistory[index].content;
+    updatePreview();
     showNotification(`已恢复到版本 ${index + 1}`, 'success');
     toggleHistory();
-    toggleHistory();
 }
 
-// 自动保存历史（每 30 秒）
-setInterval(saveToHistory, 30000);
+const defaultContent = `# Markdown 编辑器
+
+这是一个用于记录笔记、整理文档和预览排版的轻量工具。左侧编写 Markdown，右侧实时查看效果，也可以导出为 HTML 或通过浏览器保存为 PDF。
+
+## 常用功能
+
+- 实时预览
+- 快捷插入标题、链接、引用和代码
+- 整理多余空行和标题间距
+- 本地保存最近 20 个历史版本
+- 导出 Markdown、HTML 和 PDF
+
+## 代码示例
+
+\`\`\`javascript
+function hello() {
+    console.log('Hello Markdown');
+}
+\`\`\`
+
+> 提示：可以先点击“插入模板”，再根据实际内容修改。
+
+## 表格示例
+
+| 功能 | 状态 |
+| --- | --- |
+| 实时预览 | 已完成 |
+| 版本历史 | 已完成 |
+| 导出 HTML | 已完成 |
+`;
+
+input.value = defaultContent;
+input.addEventListener('input', updatePreview);
+updatePreview();
 loadHistory();
+setInterval(saveToHistory, 30000);
 
-// ========== 导出 PDF 功能 ==========
-function exportPDF() {
-    const content = document.getElementById('html-content').textContent;
-    
-    // 创建新窗口
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>导出的文档</title>
-            <style>
-                @media print {
-                    body { font-family: Arial, sans-serif; }
-                }
-            </style>
-        </head>
-        <body>
-            ${content}
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    showNotification('📕 正在导出 PDF...', 'success');
+const savedTheme = localStorage.getItem('markdownEditorTheme');
+if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    themeToggle.querySelector('.icon').textContent = '☀️';
 }
-
-// 监听输入，自动保存历史
-const originalInputHandler = document.getElementById('markdown-input').addEventListener('input', function() {
-    const markdown = this.value;
-    const html = marked.parse(markdown);
-    
-    document.getElementById('preview-content').innerHTML = html;
-    document.getElementById('html-content').textContent = html;
-    
-    // 更新字符统计
-    document.getElementById('char-count').textContent = `${markdown.length} 字符`;
-    
-    // 更新词数统计
-    const words = markdown.trim().split(/\s+/).filter(word => word.length > 0);
-    document.getElementById('word-count').textContent = `${words.length} 词`;
-});

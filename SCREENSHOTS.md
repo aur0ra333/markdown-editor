@@ -1,4 +1,4 @@
-# 📸 项目截图指南
+# 项目截图指南
 
 ## 如何生成截图
 
@@ -25,10 +25,10 @@
 - 点击主题切换按钮
 - 展示主题变化效果
 
-### 3. AI 功能演示
-- 输入一些文本
-- 点击 "AI 润色" 或 "AI 扩写"
-- 截图 AI 处理中的状态
+### 3. 文档整理功能
+- 输入包含多余空行的 Markdown 文本
+- 点击 "整理格式"
+- 截图整理后的编辑区和预览区
 
 ### 4. 版本历史
 - 点击 "历史" 按钮
@@ -46,7 +46,7 @@ markdown-editor/
 ├── screenshots/
 │   ├── dark-theme.png
 │   ├── light-theme.png
-│   ├── ai-features.png
+│   ├── format-document.png
 │   └── history.png
 ├── index.html
 ├── styles.css
@@ -79,7 +79,7 @@ markdown-editor/
 1. 打开项目
 2. 深色主题截图 → `dark-theme.png`
 3. 切换到浅色主题 → `light-theme.png`
-4. 输入测试文本，点击 AI 润色 → `ai-features.png`
+4. 输入测试文本，点击整理格式 → `format-document.png`
 5. 点击历史按钮 → `history.png`
 6. 压缩浏览器宽度到 375px → `mobile.png`
 
