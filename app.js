@@ -16,34 +16,82 @@ const outlineList = document.getElementById('outline-list');
 const checkTitle = document.getElementById('check-title');
 const checkLength = document.getElementById('check-length');
 const checkCode = document.getElementById('check-code');
+const docTitleInput = document.getElementById('document-title');
+const documentCount = document.getElementById('document-count');
+const documentList = document.getElementById('document-list');
+const fileInput = document.getElementById('file-input');
+const searchInput = document.getElementById('search-input');
+const replaceInput = document.getElementById('replace-input');
+const searchCount = document.getElementById('search-count');
 
 let currentVersionIndex = -1;
 let versionHistory = [];
+let documents = [];
+let currentDocId = null;
+let currentMatchIndex = -1;
+
+const defaultContent = `# Markdown 编辑器
+
+这是一个用于记录笔记、整理文档和预览排版的轻量工具。左侧编写 Markdown，右侧实时查看效果，也可以导出为 HTML 或通过浏览器保存为 PDF。
+
+## 常用功能
+
+- 实时预览
+- 本地文档库和自动草稿
+- 快捷插入标题、链接、引用和代码
+- 搜索、替换和格式整理
+- 本地保存最近 20 个历史版本
+- 导出 Markdown、HTML 和 PDF
+
+## 代码示例
+
+\`\`\`javascript
+function hello() {
+    console.log('Hello Markdown');
+}
+\`\`\`
+
+> 提示：可以先点击“插入模板”，再根据实际内容修改。
+
+## 表格示例
+
+| 功能 | 状态 |
+| --- | --- |
+| 实时预览 | 已完成 |
+| 文档库 | 已完成 |
+| 导出 HTML | 已完成 |
+`;
 
 function updatePreview() {
     const markdown = input.value;
     const html = marked.parse(markdown);
 
     previewContent.innerHTML = html;
-    htmlContent.textContent = html;
+    addHeadingAnchors();
+    htmlContent.textContent = previewContent.innerHTML;
     charCount.textContent = `${markdown.length} 字符`;
 
     const words = markdown.trim().split(/\s+/).filter(Boolean);
     wordCount.textContent = `${words.length} 词`;
 
-    updateOutline(markdown);
+    updateOutline();
     updateChecks(markdown);
+    updateSearchCount();
+    saveDraft();
 }
 
-function updateOutline(markdown) {
-    const headings = markdown
-        .split('\n')
-        .map((line) => line.match(/^(#{1,3})\s+(.+)/))
-        .filter(Boolean)
-        .map((match) => ({
-            level: match[1].length,
-            title: match[2].replace(/[#*_`]/g, '').trim()
-        }));
+function addHeadingAnchors() {
+    previewContent.querySelectorAll('h1, h2, h3').forEach((heading, index) => {
+        heading.id = `heading-${index}`;
+    });
+}
+
+function updateOutline() {
+    const headings = [...previewContent.querySelectorAll('h1, h2, h3')].map((heading) => ({
+        id: heading.id,
+        level: Number(heading.tagName.replace('H', '')),
+        title: heading.textContent.trim()
+    }));
 
     headingCount.textContent = headings.length;
 
@@ -53,8 +101,14 @@ function updateOutline(markdown) {
     }
 
     outlineList.innerHTML = headings.map((heading) => `
-        <button class="outline-item level-${heading.level}" type="button">${heading.title}</button>
+        <button class="outline-item level-${heading.level}" type="button" onclick="scrollToHeading('${heading.id}')">
+            ${heading.title}
+        </button>
     `).join('');
+}
+
+function scrollToHeading(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function updateChecks(markdown) {
@@ -70,24 +124,18 @@ function insertMarkdown(syntax) {
     const before = input.value.substring(0, start);
     const after = input.value.substring(end);
 
-    let inserted = syntax;
+    const snippets = {
+        '# ': `${syntax}${selected || '标题'}`,
+        '**': `**${selected || '文本'}**`,
+        '*': `*${selected || '文本'}*`,
+        '[ ]( )': `[${selected || '链接文本'}](https://example.com)`,
+        '![ ]( )': `![${selected || '图片描述'}](https://example.com/image.png)`,
+        '> ': `> ${selected || '引用内容'}`,
+        '- ': `- ${selected || '列表项'}`,
+        '`  `': `\`${selected || 'code'}\``
+    };
 
-    if (syntax === '# ') {
-        inserted = `${syntax}${selected || '标题'}`;
-    } else if (syntax === '**' || syntax === '*') {
-        inserted = `${syntax}${selected || '文本'}${syntax}`;
-    } else if (syntax === '[ ]( )') {
-        inserted = `[${selected || '链接文本'}](https://example.com)`;
-    } else if (syntax === '![ ]( )') {
-        inserted = `![${selected || '图片描述'}](https://example.com/image.png)`;
-    } else if (syntax === '> ') {
-        inserted = `> ${selected || '引用内容'}`;
-    } else if (syntax === '- ') {
-        inserted = `- ${selected || '列表项'}`;
-    } else if (syntax === '`  `') {
-        inserted = `\`${selected || 'code'}\``;
-    }
-
+    const inserted = snippets[syntax] || syntax;
     input.value = before + inserted + after;
     input.focus();
     input.setSelectionRange(before.length + inserted.length, before.length + inserted.length);
@@ -134,14 +182,18 @@ function insertTemplate() {
 - [ ] 检查格式
 `;
 
+    insertAtCursor(template);
+    showNotification('已插入模板', 'success');
+}
+
+function insertAtCursor(text) {
     const start = input.selectionStart;
     const before = input.value.substring(0, start);
     const after = input.value.substring(input.selectionEnd);
-    input.value = before + template + after;
+    input.value = before + text + after;
     input.focus();
-    input.setSelectionRange(before.length + template.length, before.length + template.length);
+    input.setSelectionRange(before.length + text.length, before.length + text.length);
     updatePreview();
-    showNotification('已插入模板', 'success');
 }
 
 function copyContent() {
@@ -154,7 +206,7 @@ function copyContent() {
 }
 
 function downloadFile() {
-    downloadBlob(input.value, 'document.md', 'text/markdown');
+    downloadBlob(input.value, `${getSafeTitle()}.md`, 'text/markdown');
     showNotification('Markdown 文件已下载', 'success');
 }
 
@@ -164,7 +216,7 @@ function exportHTML() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>导出的文档</title>
+    <title>${escapeHtml(docTitleInput.value || '导出的文档')}</title>
     <style>
         body {
             max-width: 800px;
@@ -182,11 +234,11 @@ function exportHTML() {
     </style>
 </head>
 <body>
-${htmlContent.textContent}
+${previewContent.innerHTML}
 </body>
 </html>`;
 
-    downloadBlob(fullHTML, 'document.html', 'text/html');
+    downloadBlob(fullHTML, `${getSafeTitle()}.html`, 'text/html');
     showNotification('HTML 文件已导出', 'success');
 }
 
@@ -202,7 +254,7 @@ function exportPDF() {
         <html lang="zh-CN">
         <head>
             <meta charset="UTF-8">
-            <title>导出的文档</title>
+            <title>${escapeHtml(docTitleInput.value || '导出的文档')}</title>
             <style>
                 body {
                     max-width: 800px;
@@ -214,7 +266,7 @@ function exportPDF() {
                 pre { white-space: pre-wrap; }
             </style>
         </head>
-        <body>${htmlContent.textContent}</body>
+        <body>${previewContent.innerHTML}</body>
         </html>
     `);
     printWindow.document.close();
@@ -230,6 +282,197 @@ function downloadBlob(content, filename, type) {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
+}
+
+function getSafeTitle() {
+    return (docTitleInput.value || 'document')
+        .trim()
+        .replace(/[\\/:*?"<>|]/g, '-')
+        .replace(/\s+/g, '-')
+        .slice(0, 60) || 'document';
+}
+
+function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
+}
+
+function loadDocuments() {
+    try {
+        documents = JSON.parse(localStorage.getItem('markdownDocuments') || '[]');
+    } catch (error) {
+        console.error('文档库读取失败:', error);
+        documents = [];
+    }
+    renderDocuments();
+}
+
+function saveCurrentDocument() {
+    const now = new Date().toLocaleString('zh-CN');
+    const title = docTitleInput.value.trim() || '未命名文档';
+    const payload = {
+        id: currentDocId || crypto.randomUUID(),
+        title,
+        content: input.value,
+        updatedAt: now
+    };
+
+    const index = documents.findIndex((doc) => doc.id === payload.id);
+    if (index >= 0) {
+        documents[index] = payload;
+    } else {
+        documents.unshift(payload);
+    }
+
+    currentDocId = payload.id;
+    localStorage.setItem('markdownDocuments', JSON.stringify(documents));
+    lastSaved.textContent = now.replace(/\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
+    renderDocuments();
+    showNotification('已保存到本地文档库', 'success');
+}
+
+function renderDocuments() {
+    documentCount.textContent = documents.length;
+
+    if (!documents.length) {
+        documentList.innerHTML = '<p>保存后会显示在这里。</p>';
+        return;
+    }
+
+    documentList.innerHTML = documents.slice(0, 6).map((doc) => `
+        <button class="document-item ${doc.id === currentDocId ? 'active' : ''}" onclick="openDocument('${doc.id}')">
+            <span>${escapeHtml(doc.title)}</span>
+            <small>${doc.updatedAt}</small>
+        </button>
+    `).join('');
+}
+
+function openDocument(id) {
+    const doc = documents.find((item) => item.id === id);
+    if (!doc) return;
+
+    currentDocId = doc.id;
+    docTitleInput.value = doc.title;
+    input.value = doc.content;
+    lastSaved.textContent = doc.updatedAt.replace(/\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
+    updatePreview();
+    renderDocuments();
+    showNotification('文档已打开', 'success');
+}
+
+function createNewDocument() {
+    currentDocId = null;
+    docTitleInput.value = '未命名文档';
+    input.value = '# 未命名文档\n\n开始记录你的内容。\n';
+    lastSaved.textContent = '未保存';
+    updatePreview();
+    renderDocuments();
+}
+
+function importMarkdownFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        currentDocId = null;
+        docTitleInput.value = file.name.replace(/\.(md|markdown|txt)$/i, '');
+        input.value = String(reader.result || '');
+        lastSaved.textContent = '未保存';
+        updatePreview();
+        renderDocuments();
+        showNotification('文件已导入，可继续编辑或保存', 'success');
+    };
+    reader.readAsText(file);
+}
+
+function saveDraft() {
+    localStorage.setItem('markdownDraft', JSON.stringify({
+        title: docTitleInput.value,
+        content: input.value,
+        currentDocId
+    }));
+}
+
+function loadDraft() {
+    const saved = localStorage.getItem('markdownDraft');
+    if (!saved) {
+        input.value = defaultContent;
+        return;
+    }
+
+    try {
+        const draft = JSON.parse(saved);
+        docTitleInput.value = draft.title || '项目说明文档';
+        input.value = draft.content || defaultContent;
+        currentDocId = draft.currentDocId || null;
+    } catch {
+        input.value = defaultContent;
+    }
+}
+
+function updateSearchCount() {
+    const query = searchInput.value;
+    if (!query) {
+        searchCount.textContent = '0 处匹配';
+        currentMatchIndex = -1;
+        return;
+    }
+
+    const matches = getMatches(query);
+    searchCount.textContent = `${matches.length} 处匹配`;
+    if (!matches.length) currentMatchIndex = -1;
+}
+
+function getMatches(query) {
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return [...input.value.matchAll(new RegExp(escaped, 'gi'))].map((match) => match.index);
+}
+
+function findNextMatch() {
+    const query = searchInput.value;
+    const matches = getMatches(query);
+    if (!query || !matches.length) {
+        showNotification('没有找到匹配内容', 'info');
+        return;
+    }
+
+    currentMatchIndex = (currentMatchIndex + 1) % matches.length;
+    const start = matches[currentMatchIndex];
+    input.focus();
+    input.setSelectionRange(start, start + query.length);
+}
+
+function replaceCurrentMatch() {
+    const query = searchInput.value;
+    if (!query) return;
+
+    const selection = input.value.substring(input.selectionStart, input.selectionEnd);
+    if (selection.toLowerCase() !== query.toLowerCase()) {
+        findNextMatch();
+        return;
+    }
+
+    insertAtCursor(replaceInput.value);
+    showNotification('已替换当前匹配', 'success');
+}
+
+function replaceAllMatches() {
+    const query = searchInput.value;
+    if (!query) return;
+
+    const matches = getMatches(query);
+    if (!matches.length) {
+        showNotification('没有找到匹配内容', 'info');
+        return;
+    }
+
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    input.value = input.value.replace(new RegExp(escaped, 'gi'), replaceInput.value);
+    updatePreview();
+    showNotification(`已替换 ${matches.length} 处`, 'success');
 }
 
 document.querySelectorAll('.btn-toggle').forEach((btn) => {
@@ -258,6 +501,34 @@ fullscreenBtn.addEventListener('click', () => {
         });
     } else {
         document.exitFullscreen();
+    }
+});
+
+fileInput.addEventListener('change', (event) => {
+    const [file] = event.target.files;
+    if (file) importMarkdownFile(file);
+    fileInput.value = '';
+});
+
+docTitleInput.addEventListener('input', saveDraft);
+searchInput.addEventListener('input', updateSearchCount);
+
+document.addEventListener('keydown', (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+
+    const key = event.key.toLowerCase();
+    if (key === 's') {
+        event.preventDefault();
+        saveCurrentDocument();
+    } else if (key === 'f') {
+        event.preventDefault();
+        searchInput.focus();
+    } else if (key === 'b') {
+        event.preventDefault();
+        insertMarkdown('**');
+    } else if (key === 'i') {
+        event.preventDefault();
+        insertMarkdown('*');
     }
 });
 
@@ -384,38 +655,8 @@ function restoreVersion(index) {
     toggleHistory();
 }
 
-const defaultContent = `# Markdown 编辑器
-
-这是一个用于记录笔记、整理文档和预览排版的轻量工具。左侧编写 Markdown，右侧实时查看效果，也可以导出为 HTML 或通过浏览器保存为 PDF。
-
-## 常用功能
-
-- 实时预览
-- 快捷插入标题、链接、引用和代码
-- 整理多余空行和标题间距
-- 本地保存最近 20 个历史版本
-- 导出 Markdown、HTML 和 PDF
-
-## 代码示例
-
-\`\`\`javascript
-function hello() {
-    console.log('Hello Markdown');
-}
-\`\`\`
-
-> 提示：可以先点击“插入模板”，再根据实际内容修改。
-
-## 表格示例
-
-| 功能 | 状态 |
-| --- | --- |
-| 实时预览 | 已完成 |
-| 版本历史 | 已完成 |
-| 导出 HTML | 已完成 |
-`;
-
-input.value = defaultContent;
+loadDocuments();
+loadDraft();
 input.addEventListener('input', updatePreview);
 updatePreview();
 loadHistory();

@@ -222,7 +222,7 @@ header h1 {
 
 .workspace-summary {
     display: grid;
-    grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(140px, 0.4fr));
+    grid-template-columns: minmax(260px, 1fr) repeat(4, minmax(140px, 0.4fr));
     gap: 1rem;
     margin-bottom: 1.25rem;
 }
@@ -256,6 +256,49 @@ header h1 {
 .summary-item strong {
     color: var(--text-primary);
     font-size: 1rem;
+}
+
+.search-panel {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+    gap: 1rem;
+    align-items: end;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 12px;
+}
+
+.search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.search-field span,
+.search-actions strong {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.search-field input {
+    min-height: 38px;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    padding: 0 0.75rem;
+    outline: none;
+}
+
+.search-field input:focus {
+    border-color: rgba(96, 165, 250, 0.7);
+}
+
+.search-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
 }
 
 .btn-secondary {
@@ -503,17 +546,20 @@ header h1 {
     font-size: 1rem;
 }
 
-.outline-list {
+.outline-list,
+.document-list {
     display: grid;
     gap: 0.45rem;
 }
 
-.outline-list p {
+.outline-list p,
+.document-list p {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
-.outline-item {
+.outline-item,
+.document-item {
     width: 100%;
     padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
@@ -521,6 +567,21 @@ header h1 {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
     text-align: left;
+}
+
+.document-item {
+    display: grid;
+    gap: 0.2rem;
+    cursor: pointer;
+}
+
+.document-item small {
+    color: var(--text-secondary);
+}
+
+.document-item.active {
+    border-color: rgba(96, 165, 250, 0.7);
+    background: rgba(37, 99, 235, 0.16);
 }
 
 .outline-item.level-2 { padding-left: 1.2rem; color: var(--text-secondary); }
@@ -659,6 +720,10 @@ body.light-theme .content pre {
 
     .workspace-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .search-panel {
+        grid-template-columns: 1fr;
     }
 }
 
