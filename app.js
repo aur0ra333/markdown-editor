@@ -10,6 +10,12 @@ const charCount = document.getElementById('char-count');
 const wordCount = document.getElementById('word-count');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenBtn = document.getElementById('fullscreen-btn');
+const headingCount = document.getElementById('heading-count');
+const lastSaved = document.getElementById('last-saved');
+const outlineList = document.getElementById('outline-list');
+const checkTitle = document.getElementById('check-title');
+const checkLength = document.getElementById('check-length');
+const checkCode = document.getElementById('check-code');
 
 let currentVersionIndex = -1;
 let versionHistory = [];
@@ -24,6 +30,37 @@ function updatePreview() {
 
     const words = markdown.trim().split(/\s+/).filter(Boolean);
     wordCount.textContent = `${words.length} 词`;
+
+    updateOutline(markdown);
+    updateChecks(markdown);
+}
+
+function updateOutline(markdown) {
+    const headings = markdown
+        .split('\n')
+        .map((line) => line.match(/^(#{1,3})\s+(.+)/))
+        .filter(Boolean)
+        .map((match) => ({
+            level: match[1].length,
+            title: match[2].replace(/[#*_`]/g, '').trim()
+        }));
+
+    headingCount.textContent = headings.length;
+
+    if (!headings.length) {
+        outlineList.innerHTML = '<p>输入标题后自动生成目录。</p>';
+        return;
+    }
+
+    outlineList.innerHTML = headings.map((heading) => `
+        <button class="outline-item level-${heading.level}" type="button">${heading.title}</button>
+    `).join('');
+}
+
+function updateChecks(markdown) {
+    checkTitle.classList.toggle('done', /^#\s+.+/m.test(markdown));
+    checkLength.classList.toggle('done', markdown.trim().length >= 200);
+    checkCode.classList.toggle('done', /```|^\s*[-*]\s+/m.test(markdown));
 }
 
 function insertMarkdown(syntax) {
@@ -276,6 +313,7 @@ function saveToHistory() {
 
     currentVersionIndex = versionHistory.length - 1;
     localStorage.setItem('markdownHistory', JSON.stringify(versionHistory));
+    lastSaved.textContent = timestamp.replace(/\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
 }
 
 function loadHistory() {

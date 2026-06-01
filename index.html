@@ -16,7 +16,10 @@
     <div class="container glass">
         <header>
             <div class="header-content">
-                <h1>Markdown 编辑器</h1>
+                <div>
+                    <h1>Markdown 编辑器</h1>
+                    <p class="header-subtitle">实时预览、版本历史和导出工具集中在一个页面里。</p>
+                </div>
                 <div class="header-actions">
                     <button class="action-btn" id="theme-toggle" title="切换主题">
                         <span class="icon">🌙</span>
@@ -47,6 +50,25 @@
             </div>
         </header>
 
+        <section class="workspace-summary">
+            <label class="document-title">
+                <span>文档标题</span>
+                <input id="document-title" value="项目说明文档" />
+            </label>
+            <div class="summary-item">
+                <span>标题数量</span>
+                <strong id="heading-count">0</strong>
+            </div>
+            <div class="summary-item">
+                <span>最近保存</span>
+                <strong id="last-saved">未保存</strong>
+            </div>
+            <div class="summary-item">
+                <span>导出格式</span>
+                <strong>MD / HTML / PDF</strong>
+            </div>
+        </section>
+
         <div class="editor-container">
             <div class="editor-panel glass-card">
                 <div class="panel-header">
@@ -70,6 +92,32 @@
                 <div id="preview-content" class="content"></div>
                 <pre id="html-content" class="content html-view" style="display: none;"></pre>
             </div>
+
+            <aside class="assistant-panel glass-card">
+                <section>
+                    <h3>文档目录</h3>
+                    <div id="outline-list" class="outline-list">
+                        <p>输入标题后自动生成目录。</p>
+                    </div>
+                </section>
+                <section>
+                    <h3>写作检查</h3>
+                    <ul class="check-list">
+                        <li id="check-title">包含一级标题</li>
+                        <li id="check-length">正文超过 200 字符</li>
+                        <li id="check-code">包含示例或列表</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>快捷提示</h3>
+                    <div class="shortcut-list">
+                        <span># 标题</span>
+                        <span>- 列表</span>
+                        <span>> 引用</span>
+                        <span>`代码`</span>
+                    </div>
+                </section>
+            </aside>
         </div>
 
         <div class="sample-section glass-card">
