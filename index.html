@@ -4,26 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown 编辑器 - 实时预览与导出</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@700..900&family=Source+Sans+3:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="animated-bg">
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-        <div class="gradient-orb orb-3"></div>
-    </div>
-
-    <div class="container glass">
-        <header>
-            <div class="header-content">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-header">
                 <div>
                     <h1>Markdown 编辑器</h1>
                     <p class="header-subtitle">实时预览、版本历史和导出工具集中在一个页面里。</p>
                 </div>
                 <div class="header-actions">
-                    <button class="action-btn" id="theme-toggle" title="切换主题">
-                        <span class="icon">🌙</span>
-                    </button>
                     <button class="action-btn" id="fullscreen-btn" title="全屏">
                         <span class="icon">⛶</span>
                     </button>
@@ -35,8 +29,8 @@
                 <button class="btn-tool" onclick="insertMarkdown('*')" title="斜体"><i>I</i></button>
                 <button class="btn-tool" onclick="insertMarkdown('[ ]( )')" title="链接">Link</button>
                 <button class="btn-tool" onclick="insertMarkdown('![ ]( )')" title="图片">Img</button>
-                <button class="btn-tool" onclick="insertMarkdown('> ')" title="引用">❝</button>
-                <button class="btn-tool" onclick="insertMarkdown('- ')" title="列表">•</button>
+                <button class="btn-tool" onclick="insertMarkdown('> ')" title="引用">&#10077;</button>
+                <button class="btn-tool" onclick="insertMarkdown('- ')" title="列表">&bull;</button>
                 <button class="btn-tool" onclick="insertMarkdown('`  `')" title="代码">&lt;/&gt;</button>
                 <div class="toolbar-divider"></div>
                 <button class="btn-secondary" onclick="formatMarkdown()" title="整理空行和段落">整理格式</button>
@@ -52,8 +46,10 @@
                 <button class="btn-primary" onclick="exportPDF()">导出 PDF</button>
                 <button class="btn-tool" onclick="toggleHistory()" title="版本历史">历史</button>
             </div>
-        </header>
+        </div>
+    </nav>
 
+    <div class="container">
         <section class="workspace-summary">
             <label class="document-title">
                 <span>文档标题</span>
@@ -77,7 +73,7 @@
             </div>
         </section>
 
-        <section class="search-panel glass-card">
+        <section class="search-panel">
             <div class="search-field">
                 <span>查找</span>
                 <input id="search-input" placeholder="输入关键词，Ctrl+F 聚焦" />
@@ -95,7 +91,7 @@
         </section>
 
         <div class="editor-container">
-            <div class="editor-panel glass-card">
+            <div class="editor-panel">
                 <div class="panel-header">
                     <h3>编辑</h3>
                     <div class="editor-stats">
@@ -106,7 +102,7 @@
                 <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..." autofocus></textarea>
             </div>
 
-            <div class="preview-panel glass-card">
+            <div class="preview-panel">
                 <div class="panel-header">
                     <h3>预览</h3>
                     <div class="preview-controls">
@@ -118,7 +114,7 @@
                 <pre id="html-content" class="content html-view" style="display: none;"></pre>
             </div>
 
-            <aside class="assistant-panel glass-card">
+            <aside class="assistant-panel">
                 <section>
                     <h3>文档库</h3>
                     <div id="document-list" class="document-list">
@@ -144,14 +140,14 @@
                     <div class="shortcut-list">
                         <span># 标题</span>
                         <span>- 列表</span>
-                        <span>> 引用</span>
+                        <span>&gt; 引用</span>
                         <span>`代码`</span>
                     </div>
                 </section>
             </aside>
         </div>
 
-        <div class="sample-section glass-card">
+        <div class="sample-section">
             <h3>Markdown 语法速查</h3>
             <div class="syntax-grid">
                 <div class="syntax-item">
@@ -179,7 +175,7 @@
                     <p>图片</p>
                 </div>
                 <div class="syntax-item">
-                    <code>> 引用</code>
+                    <code>&gt; 引用</code>
                     <p>引用文本</p>
                 </div>
                 <div class="syntax-item">
