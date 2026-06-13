@@ -315,15 +315,32 @@ h1, h2, h3, h4, h5, h6,
 
 .editor-stats {
     display: flex;
-    gap: 15px;
+    gap: 10px;
+    align-items: center;
 }
 
-.char-count, .word-count {
+.char-count, .word-count, .line-count {
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     padding: 4px 8px;
     background: var(--surface-soft);
     border-radius: 6px;
+}
+
+/* ---- Auto-save Indicator ---- */
+.auto-save-indicator {
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    background: var(--surface-soft);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.auto-save-indicator.saved {
+    color: var(--green);
+    background: #e6f7ee;
 }
 
 #markdown-input {
@@ -530,10 +547,97 @@ h1, h2, h3, h4, h5, h6,
     gap: 0.45rem;
 }
 
+/* 文档库滚动 */
+.document-list {
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.document-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.document-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.document-list::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 10px;
+}
+
+.document-list::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+}
+
 .outline-list p,
 .document-list p {
     color: var(--muted);
     font-size: 0.9rem;
+}
+
+/* ---- Document Item Wrapper ---- */
+.document-item-wrapper {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.document-item-wrapper:hover {
+    border-color: var(--blue);
+}
+
+.document-item-wrapper.active {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.document-item-wrapper .document-item {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+}
+
+.document-item-wrapper .document-item:hover {
+    background: transparent;
+}
+
+.document-item-wrapper .document-item.active {
+    background: transparent;
+}
+
+.document-item-actions {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--line);
+    flex-shrink: 0;
+}
+
+.btn-doc-action {
+    flex: 1;
+    padding: 4px 8px;
+    border: none;
+    background: var(--surface-soft);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: var(--transition);
+    line-height: 1;
+    min-width: 28px;
+}
+
+.btn-doc-action:hover {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+
+.btn-doc-delete:hover {
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 .outline-item,
@@ -673,6 +777,78 @@ h1, h2, h3, h4, h5, h6,
 
 .history-item small {
     color: var(--muted);
+}
+
+/* ---- Regex Toggle ---- */
+.regex-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.regex-toggle:hover {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.regex-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--blue);
+    cursor: pointer;
+    margin: 0;
+}
+
+.regex-toggle span {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-family: 'Courier New', 'Cascadia Code', monospace;
+}
+
+/* ---- Search Highlight ---- */
+mark.search-highlight {
+    background: #fde68a;
+    color: var(--ink);
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+/* ---- PDF 打印分页样式 ---- */
+@media print {
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+
+    pre, blockquote, table, img {
+        page-break-inside: avoid;
+    }
+
+    .navbar, .toolbar, .search-panel, .assistant-panel,
+    .workspace-summary, .sample-section, .glass-footer,
+    .panel-header, .preview-controls {
+        display: none !important;
+    }
+
+    .editor-container {
+        display: block !important;
+    }
+
+    #markdown-input {
+        display: none !important;
+    }
+
+    .content {
+        height: auto !important;
+        overflow: visible !important;
+    }
 }
 
 /* ---- Responsive ---- */

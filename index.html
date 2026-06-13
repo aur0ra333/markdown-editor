@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@700..900&family=Source+Sans+3:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 </head>
 <body>
     <nav class="navbar">
@@ -32,6 +33,9 @@
                 <button class="btn-tool" onclick="insertMarkdown('> ')" title="引用">&#10077;</button>
                 <button class="btn-tool" onclick="insertMarkdown('- ')" title="列表">&bull;</button>
                 <button class="btn-tool" onclick="insertMarkdown('`  `')" title="代码">&lt;/&gt;</button>
+                <div class="toolbar-divider"></div>
+                <button class="btn-tool" id="undo-btn" onclick="undo()" title="撤销 Ctrl+Z" disabled>↩</button>
+                <button class="btn-tool" id="redo-btn" onclick="redo()" title="重做 Ctrl+Shift+Z" disabled>↪</button>
                 <div class="toolbar-divider"></div>
                 <button class="btn-secondary" onclick="formatMarkdown()" title="整理空行和段落">整理格式</button>
                 <button class="btn-secondary" onclick="insertTemplate()" title="插入常用文档结构">插入模板</button>
@@ -86,6 +90,10 @@
                 <button class="btn-secondary" onclick="findNextMatch()">下一个</button>
                 <button class="btn-secondary" onclick="replaceCurrentMatch()">替换</button>
                 <button class="btn-secondary" onclick="replaceAllMatches()">全部替换</button>
+                <label class="regex-toggle" title="启用正则表达式搜索">
+                    <input type="checkbox" id="regex-toggle" />
+                    <span>.*</span>
+                </label>
                 <strong id="search-count">0 处匹配</strong>
             </div>
         </section>
@@ -95,8 +103,10 @@
                 <div class="panel-header">
                     <h3>编辑</h3>
                     <div class="editor-stats">
+                        <span class="auto-save-indicator" id="auto-save-indicator">--</span>
                         <span class="char-count" id="char-count">0 字符</span>
                         <span class="word-count" id="word-count">0 词</span>
+                        <span class="line-count" id="line-count">0 行</span>
                     </div>
                 </div>
                 <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..." autofocus></textarea>
@@ -191,6 +201,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
