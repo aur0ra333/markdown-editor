@@ -129,7 +129,7 @@ const defaultContent = `# Markdown 编辑器
 
 \`\`\`javascript
 function hello() {
-    console.log('Hello Markdown');
+    // 这是一段示例代码
 }
 \`\`\`
 

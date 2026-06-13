@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown 编辑器 - 实时预览与导出</title>
+    <title>Markdown 文档工作台 - 申浩天</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@700..900&family=Source+Sans+3:wght@400..900&display=swap" rel="stylesheet">
@@ -109,7 +109,7 @@
                         <span class="line-count" id="line-count">0 行</span>
                     </div>
                 </div>
-                <textarea id="markdown-input" placeholder="在此输入 Markdown 内容..." autofocus></textarea>
+                <textarea id="markdown-input" placeholder="输入 Markdown 语法，右侧实时预览" autofocus></textarea>
             </div>
 
             <div class="preview-panel">
@@ -142,7 +142,7 @@
                     <ul class="check-list">
                         <li id="check-title">包含一级标题</li>
                         <li id="check-length">正文超过 200 字符</li>
-                        <li id="check-code">包含示例或列表</li>
+                        <li id="check-code">包含代码块或列表</li>
                     </ul>
                 </section>
                 <section>
@@ -203,5 +203,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="app.js"></script>
+<footer style="text-align:center;padding:28px 0;color:var(--muted);font-size:0.82rem;border-top:1px solid var(--line);margin-top:40px;">
+    &copy; 2026 申浩天 · 基于 Marked.js 构建
+</footer>
 </body>
 </html>
